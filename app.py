@@ -4,76 +4,88 @@ import yaml
 
 app = Flask(__name__)
 
-BASE_DIR = "generated_inventories"
-HOSTVARS_DIR = os.path.join(BASE_DIR, "host_vars")
-os.makedirs(HOSTVARS_DIR, exist_ok=True)
+GENERATED_ROOT = os.path.join(os.path.dirname(__file__), "generated_inventories")
+os.makedirs(GENERATED_ROOT, exist_ok=True)
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/generate", methods=["POST"])
+@app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
-    hosts = data.get("hosts", [])
+    inventory_name = data.get("inventory_name", "inventory")
+    groups = data.get("groups", [])
 
-    # Estrutura base YAML
-    inventory = {
-        "all": {
-            "children": {
-                "elasticsearch": {"children": {}},
-                "kibana": {"hosts": {}},
-                "logstash": {"hosts": {}},
-                "fleet-server": {"hosts": {}},
-                "machine_learning": {"hosts": {}},
-                "coordinator": {"hosts": {}}
-            }
-        }
-    }
+    base_path = os.path.join(GENERATED_ROOT, inventory_name)
+    hostvars_path = os.path.join(base_path, "host_vars")
+    os.makedirs(hostvars_path, exist_ok=True)
 
-    # Limpa host_vars antes de gerar
-    for f in os.listdir(HOSTVARS_DIR):
-        os.remove(os.path.join(HOSTVARS_DIR, f))
+    # Build inventory structure
+    inventory = {"all": {"children": {}}}
 
-    for h in hosts:
-        name = h.get("name")
-        ip = h.get("ip")
-        node_type = h.get("type")
-        roles = h.get("roles", [])
+    # Clean host_vars folder (remove previous files for this inventory)
+    for f in os.listdir(hostvars_path):
+        try:
+            os.remove(os.path.join(hostvars_path, f))
+        except Exception:
+            pass
 
-        # Adiciona host ao inventário
-        if node_type in ["master", "hot", "warm", "cold", "frozen"]:
-            child_group = f"{node_type}_nodes"
-            inventory["all"]["children"]["elasticsearch"]["children"].setdefault(child_group, {"hosts": {}})
-            inventory["all"]["children"]["elasticsearch"]["children"][child_group]["hosts"][name] = {
-                "ansible_host": ip
-            }
+    for group in groups:
+        group_name = group.get("group_name") or "ungrouped"
+        hosts = group.get("hosts", [])
+
+        # Ensure the parent structure for typical groups like elasticsearch children
+        # We'll place ES-related groups under 'elasticsearch' as 'children' when appropriate
+        es_related = ['master', 'hot', 'warm', 'cold', 'frozen']
+        # Normalize group key names (e.g., master -> master_nodes)
+        group_key = group_name
+        if group_name.lower() in es_related:
+            # put under elasticsearch -> children -> <group>_nodes
+            parent = inventory["all"]["children"].setdefault("elasticsearch", {"children": {}})
+            child_group = f"{group_name}_nodes"
+            parent_children = parent["children"]
+            parent_children.setdefault(child_group, {"hosts": {}})
+            target = parent_children[child_group]["hosts"]
         else:
-            inventory["all"]["children"].setdefault(node_type, {"hosts": {}})
-            inventory["all"]["children"][node_type]["hosts"][name] = {
-                "ansible_host": ip
-            }
+            # put at inventory all.children.<group_name>.hosts
+            parent = inventory["all"]["children"]
+            parent.setdefault(group_name, {"hosts": {}})
+            target = parent[group_name]["hosts"]
 
-        # Cria host_vars/<hostname>.yml
-        hostvar_path = os.path.join(HOSTVARS_DIR, f"{name}.yml")
-        host_vars_content = {"es_node_name": name}
-        if roles:
-            host_vars_content["node_role"] = roles
+        for h in hosts:
+            hostname = h.get("hostname")
+            ip = h.get("ip")
+            roles = h.get("roles", []) or []
 
-        with open(hostvar_path, "w") as hv:
-            yaml.dump(host_vars_content, hv, sort_keys=False)
+            if not hostname or not ip:
+                continue
 
-    # Salva inventário principal
-    inventory_path = os.path.join(BASE_DIR, "hosts.yml")
-    with open(inventory_path, "w") as f:
+            target[hostname] = {"ansible_host": ip}
+
+            # create host_vars file
+            host_var = {"es_node_name": hostname}
+            if roles:
+                host_var["node_role"] = roles
+
+            hv_file = os.path.join(hostvars_path, f"{hostname}.yml")
+            with open(hv_file, 'w') as f:
+                yaml.dump(host_var, f, sort_keys=False)
+
+    # Write hosts.yml at base_path
+    os.makedirs(base_path, exist_ok=True)
+    hosts_yml_path = os.path.join(base_path, "hosts.yml")
+    with open(hosts_yml_path, 'w') as f:
         yaml.dump(inventory, f, sort_keys=False)
 
-    return jsonify({"filename": "hosts.yml"})
+    return jsonify({"message": f"Inventory '{inventory_name}' generated", "path": f"{inventory_name}/hosts.yml"})
 
-@app.route("/download/<filename>")
-def download(filename):
-    path = os.path.join(BASE_DIR, filename)
+@app.route('/download/<inventory>/<filename>')
+def download(inventory, filename):
+    path = os.path.join(GENERATED_ROOT, inventory, filename)
+    if not os.path.exists(path):
+        return "Not found", 404
     return send_file(path, as_attachment=True)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,26 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Gerador de Inventário Ansible</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- CodeMirror (for YAML viewer) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/yaml/yaml.min.js"></script>
+  <!-- js-yaml -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Gerador de Inventário Ansible</h1>
-    <div class="form">
-      <h3>Hosts</h3>
-      <div id="hosts-container"></div>
-      <button id="add-host">+ Adicionar Host</button>
-      <button id="generate-btn">Gerar Inventário</button>
+
+    <div class="row">
+      <label>Nome do inventário</label>
+      <input id="inventoryName" placeholder="ex: elk-forensics" value="elk-forensics">
     </div>
 
-    <div id="result" class="hidden">
-      <h3>Inventário Gerado!</h3>
-      <p id="filename"></p>
-      <a id="download-link" href="#" class="btn">Baixar hosts.yml</a>
+    <div class="actions">
+      <button id="addGroupBtn">+ Adicionar Grupo</button>
+      <button id="generateBtn">Gerar hosts.yml</button>
     </div>
+
+    <div id="groupsContainer"></div>
+
+    <div id="result" class="hidden">
+      <p id="resultMsg"></p>
+      <a id="downloadLink" class="btn" href="#">Baixar hosts.yml</a>
+    </div>
+
+    <h2>Visualizador YAML</h2>
+    <textarea id="yamlViewer"></textarea>
   </div>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
