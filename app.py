@@ -1,91 +1,68 @@
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, render_template, request, jsonify
 import os
 import yaml
 
 app = Flask(__name__)
 
-GENERATED_ROOT = os.path.join(os.path.dirname(__file__), "generated_inventories")
-os.makedirs(GENERATED_ROOT, exist_ok=True)
+# Diretório onde os inventários serão gerados
+BASE_DIR = os.path.join(os.getcwd(), "generated_inventories")
+os.makedirs(BASE_DIR, exist_ok=True)
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/generate', methods=['POST'])
-def generate():
+
+@app.route("/generate", methods=["POST"])
+def generate_inventory():
     data = request.get_json()
-    inventory_name = data.get("inventory_name", "inventory")
+    inventory_name = data.get("inventory_name", "inventario_padrao")
     groups = data.get("groups", [])
 
-    base_path = os.path.join(GENERATED_ROOT, inventory_name)
-    hostvars_path = os.path.join(base_path, "host_vars")
-    os.makedirs(hostvars_path, exist_ok=True)
+    inv_dir = os.path.join(BASE_DIR, inventory_name)
+    host_vars_dir = os.path.join(inv_dir, "host_vars")
 
-    # Build inventory structure
+    os.makedirs(inv_dir, exist_ok=True)
+    os.makedirs(host_vars_dir, exist_ok=True)
+
     inventory = {"all": {"children": {}}}
 
-    # Clean host_vars folder (remove previous files for this inventory)
-    for f in os.listdir(hostvars_path):
-        try:
-            os.remove(os.path.join(hostvars_path, f))
-        except Exception:
-            pass
-
     for group in groups:
-        group_name = group.get("group_name") or "ungrouped"
+        group_name = group.get("group_name")
         hosts = group.get("hosts", [])
+        if not group_name or not hosts:
+            continue
 
-        # Ensure the parent structure for typical groups like elasticsearch children
-        # We'll place ES-related groups under 'elasticsearch' as 'children' when appropriate
-        es_related = ['master', 'hot', 'warm', 'cold', 'frozen']
-        # Normalize group key names (e.g., master -> master_nodes)
-        group_key = group_name
-        if group_name.lower() in es_related:
-            # put under elasticsearch -> children -> <group>_nodes
-            parent = inventory["all"]["children"].setdefault("elasticsearch", {"children": {}})
-            child_group = f"{group_name}_nodes"
-            parent_children = parent["children"]
-            parent_children.setdefault(child_group, {"hosts": {}})
-            target = parent_children[child_group]["hosts"]
-        else:
-            # put at inventory all.children.<group_name>.hosts
-            parent = inventory["all"]["children"]
-            parent.setdefault(group_name, {"hosts": {}})
-            target = parent[group_name]["hosts"]
+        group_dict = {"hosts": {}}
 
-        for h in hosts:
-            hostname = h.get("hostname")
-            ip = h.get("ip")
-            roles = h.get("roles", []) or []
+        for host in hosts:
+            hostname = host.get("hostname")
+            ip = host.get("ip")
+            roles = host.get("roles", [])
 
-            if not hostname or not ip:
-                continue
+            # Adiciona host ao inventário
+            group_dict["hosts"][hostname] = {"ansible_host": ip}
 
-            target[hostname] = {"ansible_host": ip}
+            # Cria host_vars/<hostname>.yml
+            host_vars = {
+                "node_role": roles if roles else [],
+                "es_node_name": hostname
+            }
 
-            # create host_vars file
-            host_var = {"es_node_name": hostname}
-            if roles:
-                host_var["node_role"] = roles
+            with open(os.path.join(host_vars_dir, f"{hostname}.yml"), "w") as hv:
+                yaml.dump(host_vars, hv, sort_keys=False)
 
-            hv_file = os.path.join(hostvars_path, f"{hostname}.yml")
-            with open(hv_file, 'w') as f:
-                yaml.dump(host_var, f, sort_keys=False)
+        # Adiciona grupo ao inventário
+        inventory["all"]["children"][group_name] = group_dict
 
-    # Write hosts.yml at base_path
-    os.makedirs(base_path, exist_ok=True)
-    hosts_yml_path = os.path.join(base_path, "hosts.yml")
-    with open(hosts_yml_path, 'w') as f:
+    # Cria hosts.yml
+    hosts_path = os.path.join(inv_dir, "hosts.yml")
+    with open(hosts_path, "w") as f:
         yaml.dump(inventory, f, sort_keys=False)
 
-    return jsonify({"message": f"Inventory '{inventory_name}' generated", "path": f"{inventory_name}/hosts.yml"})
+    return jsonify({"message": "Inventário gerado com sucesso!", "inventory": inventory})
 
-@app.route('/download/<inventory>/<filename>')
-def download(inventory, filename):
-    path = os.path.join(GENERATED_ROOT, inventory, filename)
-    if not os.path.exists(path):
-        return "Not found", 404
-    return send_file(path, as_attachment=True)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
