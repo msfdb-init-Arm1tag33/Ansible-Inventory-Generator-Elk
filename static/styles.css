@@ -5,7 +5,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0;
 }
 
@@ -14,7 +14,7 @@ body {
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 0 20px rgba(0,0,0,0.4);
-  width: 400px;
+  width: 500px;
 }
 
 h1 {
@@ -27,7 +27,7 @@ label {
   margin-top: 10px;
 }
 
-input {
+input, select {
   width: 100%;
   padding: 8px;
   margin-top: 4px;
@@ -59,10 +59,27 @@ button:hover, .btn:hover {
 
 .host-row {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 5px;
+  background: #0f172a;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
-.host-row input {
-  flex: 1;
+.roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #1e293b;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
 }
