@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Inventário Ansible</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Gerador de Inventário Ansible</h1>
+    
+    <div class="form">
+      <label for="group">Nome do Grupo:</label>
+      <input type="text" id="group" placeholder="ex: webservers" required />
+
+      <h3>Hosts</h3>
+      <div id="hosts-container"></div>
+      <button id="add-host">+ Adicionar Host</button>
+
+      <button id="generate-btn">Gerar Inventário</button>
+    </div>
+
+    <div id="result" class="hidden">
+      <h3>Inventário Gerado!</h3>
+      <p id="filename"></p>
+      <a id="download-link" href="#" class="btn">Baixar Inventário</a>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
