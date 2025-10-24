@@ -4,7 +4,6 @@ import yaml
 
 app = Flask(__name__)
 
-# Diretório onde os inventários serão gerados
 BASE_DIR = os.path.join(os.getcwd(), "generated_inventories")
 os.makedirs(BASE_DIR, exist_ok=True)
 
@@ -18,7 +17,13 @@ def index():
 def generate_inventory():
     data = request.get_json()
     inventory_name = data.get("inventory_name", "inventario_padrao")
-    groups = data.get("groups", [])
+
+    groups_data = {
+        "data_nodes": data.get("data_nodes", []),
+        "kibana": data.get("kibana", []),
+        "logstash": data.get("logstash", []),
+        "fleet": data.get("fleet", [])
+    }
 
     inv_dir = os.path.join(BASE_DIR, inventory_name)
     host_vars_dir = os.path.join(inv_dir, "host_vars")
@@ -26,37 +31,54 @@ def generate_inventory():
     os.makedirs(inv_dir, exist_ok=True)
     os.makedirs(host_vars_dir, exist_ok=True)
 
-    inventory = {"all": {"children": {}}}
+    # Estrutura inicial
+    inventory = {"all": {"children": {"elasticsearch": {"children": {}}}}}
 
-    for group in groups:
+    # --- Data Nodes (dentro de elasticsearch)
+    for group in groups_data["data_nodes"]:
         group_name = group.get("group_name")
         hosts = group.get("hosts", [])
         if not group_name or not hosts:
             continue
 
         group_dict = {"hosts": {}}
-
         for host in hosts:
             hostname = host.get("hostname")
             ip = host.get("ip")
             roles = host.get("roles", [])
-
-            # Adiciona host ao inventário
             group_dict["hosts"][hostname] = {"ansible_host": ip}
 
-            # Cria host_vars/<hostname>.yml
             host_vars = {
                 "node_role": roles if roles else [],
                 "es_node_name": hostname
             }
-
             with open(os.path.join(host_vars_dir, f"{hostname}.yml"), "w") as hv:
                 yaml.dump(host_vars, hv, sort_keys=False)
 
-        # Adiciona grupo ao inventário
-        inventory["all"]["children"][group_name] = group_dict
+        inventory["all"]["children"]["elasticsearch"]["children"][group_name] = group_dict
 
-    # Cria hosts.yml
+    # --- Kibana, Logstash, Fleet
+    for section in ["kibana", "logstash", "fleet"]:
+        section_groups = groups_data[section]
+        for group in section_groups:
+            group_name = group.get("group_name") or section
+            hosts = group.get("hosts", [])
+            if not hosts:
+                continue
+
+            group_dict = {"hosts": {}}
+            for host in hosts:
+                hostname = host.get("hostname")
+                ip = host.get("ip")
+                group_dict["hosts"][hostname] = {"ansible_host": ip}
+
+                host_vars = {"es_node_name": hostname}
+                with open(os.path.join(host_vars_dir, f"{hostname}.yml"), "w") as hv:
+                    yaml.dump(host_vars, hv, sort_keys=False)
+
+            inventory["all"]["children"][section] = group_dict
+
+    # Salvar hosts.yml
     hosts_path = os.path.join(inv_dir, "hosts.yml")
     with open(hosts_path, "w") as f:
         yaml.dump(inventory, f, sort_keys=False)

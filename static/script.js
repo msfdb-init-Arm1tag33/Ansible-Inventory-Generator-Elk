@@ -10,8 +10,7 @@ function createRoleCheckboxes() {
     `).join(" ");
 }
 
-function addGroup() {
-    const groupId = Date.now();
+function addGroup(containerId) {
     const groupDiv = document.createElement("div");
     groupDiv.classList.add("group-block");
     groupDiv.innerHTML = `
@@ -22,7 +21,7 @@ function addGroup() {
         <div class="hostsContainer"></div>
         <button onclick="addHost(this)">Adicionar Host</button>
     `;
-    document.getElementById("groupsContainer").appendChild(groupDiv);
+    document.getElementById(containerId).appendChild(groupDiv);
 }
 
 function addHost(button) {
@@ -40,25 +39,39 @@ function addHost(button) {
 
 async function generateInventory() {
     const inventoryName = document.getElementById("inventoryName").value || "inventario_padrao";
-    const groups = [];
-    document.querySelectorAll(".group-block").forEach(groupBlock => {
-        const groupName = groupBlock.querySelector(".groupName").value.trim();
-        const hosts = [];
-        groupBlock.querySelectorAll(".host-block").forEach(hostBlock => {
-            const hostname = hostBlock.querySelector(".hostname").value.trim();
-            const ip = hostBlock.querySelector(".ip").value.trim();
-            const roles = Array.from(hostBlock.querySelectorAll(".roles input:checked")).map(i => i.value);
-            if (hostname && ip) hosts.push({ hostname, ip, roles });
+
+    function extractGroups(containerId, includeRoles = false) {
+        const groups = [];
+        document.querySelectorAll(`#${containerId} .group-block`).forEach(groupBlock => {
+            const groupName = groupBlock.querySelector(".groupName").value.trim();
+            const hosts = [];
+            groupBlock.querySelectorAll(".host-block").forEach(hostBlock => {
+                const hostname = hostBlock.querySelector(".hostname").value.trim();
+                const ip = hostBlock.querySelector(".ip").value.trim();
+                const roles = includeRoles
+                    ? Array.from(hostBlock.querySelectorAll(".roles input:checked")).map(i => i.value)
+                    : [];
+                if (hostname && ip) hosts.push({ hostname, ip, roles });
+            });
+            if (groupName && hosts.length > 0) groups.push({ group_name: groupName, hosts });
         });
-        if (groupName && hosts.length > 0) groups.push({ group_name: groupName, hosts });
-    });
+        return groups;
+    }
+
+    const payload = {
+        inventory_name: inventoryName,
+        data_nodes: extractGroups("dataNodesContainer", true),
+        kibana: extractGroups("kibanaContainer"),
+        logstash: extractGroups("logstashContainer"),
+        fleet: extractGroups("fleetContainer"),
+    };
 
     const res = await fetch("/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inventory_name: inventoryName, groups })
+        body: JSON.stringify(payload)
     });
-    const result = await res.json();
 
+    const result = await res.json();
     document.getElementById("yamlOutput").textContent = jsyaml.dump(result.inventory);
 }
