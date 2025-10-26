@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import os
 import yaml
+import io
+import zipfile
 
 app = Flask(__name__)
 
@@ -11,6 +13,10 @@ os.makedirs(BASE_DIR, exist_ok=True)
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/variables")
+def variables():
+    return render_template("all_variables.html")
 
 
 @app.route("/generate", methods=["POST"])
@@ -84,6 +90,19 @@ def generate_inventory():
         yaml.dump(inventory, f, sort_keys=False)
 
     return jsonify({"message": "Inventário gerado com sucesso!", "inventory": inventory})
+
+
+@app.route('/generate_all_vars', methods=['POST'])
+def generate_all_vars():
+    vars_data = {k: v for k, v in request.form.items()}
+    vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
+
+    mem_zip = io.BytesIO()
+    with zipfile.ZipFile(mem_zip, 'w') as zf:
+        zf.writestr("group_vars/all/all.yml", vars_yml)
+
+    mem_zip.seek(0)
+    return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
 
 
 if __name__ == "__main__":

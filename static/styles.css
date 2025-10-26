@@ -62,3 +62,17 @@ input[type="text"] {
     font-family: monospace;
     border: 1px solid #1e293b;
 }
+
+.secondary-button {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #333;
+    color: #00bcd4;
+    border-radius: 6px;
+    text-decoration: none;
+}
+.secondary-button:hover {
+    background-color: #444;
+}
