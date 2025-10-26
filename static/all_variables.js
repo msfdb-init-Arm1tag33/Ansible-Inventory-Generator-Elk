@@ -1,30 +1,26 @@
 document.getElementById("varsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  // Pergunta ao usuário qual inventário usar
+  const inventoryName = prompt("Digite o nome do inventário onde salvar as variáveis:");
+  if (!inventoryName) return alert("Nome do inventário é obrigatório!");
+
   const formData = new FormData(e.target);
 
   try {
-    const response = await fetch("/generate_all_vars", {
+    const response = await fetch(`/generate_all_vars?inventory_name=${inventoryName}`, {
       method: "POST",
       body: formData
     });
 
-    if (!response.ok) throw new Error("Erro ao gerar o arquivo");
+    if (!response.ok) throw new Error("Erro ao gerar all.yml");
 
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "all_vars.zip";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
+    const result = await response.json();
     document.getElementById("response").innerHTML =
-      "<p style='color:green'>Arquivo all_vars.zip gerado com sucesso!</p>";
+      `<p style="color:green">${result.message}</p>`;
   } catch (error) {
     document.getElementById("response").innerHTML =
-      "<p style='color:red'>Erro ao gerar o arquivo: " + error.message + "</p>";
+      `<p style="color:red">Erro: ${error.message}</p>`;
   }
 });
 

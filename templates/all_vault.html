@@ -1,0 +1,25 @@
+document.getElementById("vaultForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // Pergunta ao usuário qual inventário usar
+  const inventoryName = prompt("Digite o nome do inventário onde salvar o vault:");
+  if (!inventoryName) return alert("Nome do inventário é obrigatório!");
+
+  const formData = new FormData(e.target);
+
+  try {
+    const response = await fetch(`/generate_vault_vars?inventory_name=${inventoryName}`, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) throw new Error("Erro ao gerar all_vault.yml");
+
+    const result = await response.json();
+    document.getElementById("response").innerHTML =
+      `<p style="color:green">${result.message}</p>`;
+  } catch (error) {
+    document.getElementById("response").innerHTML =
+      `<p style="color:red">Erro: ${error.message}</p>`;
+  }
+});

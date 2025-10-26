@@ -104,6 +104,22 @@ def generate_all_vars():
     mem_zip.seek(0)
     return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
 
+@app.route('/generate_all_vars', methods=['POST'])
+def generate_all_vars():
+    inventory_name = request.args.get("inventory_name", "inventario_padrao")
+    vars_data = {k: v for k, v in request.form.items()}
+
+    inv_dir = os.path.join(BASE_DIR, inventory_name)
+    all_dir = os.path.join(inv_dir, "group_vars", "all")
+    os.makedirs(all_dir, exist_ok=True)
+
+    all_yml_path = os.path.join(all_dir, "all.yml")
+    with open(all_yml_path, "w") as f:
+        yaml.dump(vars_data, f, sort_keys=False, allow_unicode=True)
+
+    return jsonify({"message": f"Arquivo all.yml criado em {all_yml_path}"})
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
