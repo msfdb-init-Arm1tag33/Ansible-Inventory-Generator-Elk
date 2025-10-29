@@ -107,8 +107,8 @@ def generate_all_vars():
     mem_zip.seek(0)
     return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
 
-@app.route('/generate_all_vault', methods=['POST'])
-def generate_all_vars():
+@app.route('/generate_all_vault_vars', methods=['POST'])
+def generate_all_vault_vars():
     vars_data = {k: v for k, v in request.form.items()}
     vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
 
