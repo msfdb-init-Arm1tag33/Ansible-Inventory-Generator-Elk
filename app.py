@@ -22,6 +22,18 @@ def variables():
 def all_vault():
     return render_template("all_vault.html")
 
+@app.route("/elasticsearch_vars")
+def all_vault():
+    return render_template("elasticsearch_variables.html")
+
+@app.route("/kibana_vars")
+def all_vault():
+    return render_template("kibana_variables.html")
+
+@app.route("/fleetserver_vars")
+def all_vault():
+    return render_template("fleetserver_variables.html")
+
 @app.route("/generate", methods=["POST"])
 def generate_inventory():
     data = request.get_json()
@@ -117,7 +129,43 @@ def generate_all_vault_vars():
         zf.writestr("group_vars/all/all_vault.yml", vars_yml)
 
     mem_zip.seek(0)
-    return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
+    return send_file(mem_zip, as_attachment=True, download_name="all_vault_vars.zip")
+
+@app.route('/generate_elasticsearch_vars', methods=['POST'])
+def generate_elasticsearch_vars():
+    vars_data = {k: v for k, v in request.form.items()}
+    vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
+
+    mem_zip = io.BytesIO()
+    with zipfile.ZipFile(mem_zip, 'w') as zf:
+        zf.writestr("group_vars/elasticsearch/elasticsearch.yml", vars_yml)
+
+    mem_zip.seek(0)
+    return send_file(mem_zip, as_attachment=True, download_name="elasticsearch_vars.zip")
+
+@app.route('/generate_kibana_vars', methods=['POST'])
+def generate_kibana_vars():
+    vars_data = {k: v for k, v in request.form.items()}
+    vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
+
+    mem_zip = io.BytesIO()
+    with zipfile.ZipFile(mem_zip, 'w') as zf:
+        zf.writestr("group_vars/kibana/kibana.yml", vars_yml)
+
+    mem_zip.seek(0)
+    return send_file(mem_zip, as_attachment=True, download_name="kibana_vars.zip")
+
+@app.route('/generate_fleetserver_vars', methods=['POST'])
+def generate_fleetserver_vars():
+    vars_data = {k: v for k, v in request.form.items()}
+    vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
+
+    mem_zip = io.BytesIO()
+    with zipfile.ZipFile(mem_zip, 'w') as zf:
+        zf.writestr("group_vars/fleet_server/fleet_server.yml", vars_yml)
+
+    mem_zip.seek(0)
+    return send_file(mem_zip, as_attachment=True, download_name="fleetserver_vars.zip")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
