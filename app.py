@@ -23,15 +23,15 @@ def all_vault():
     return render_template("all_vault.html")
 
 @app.route("/elasticsearch_vars")
-def all_vault():
+def elasticsearch_vars():
     return render_template("elasticsearch_variables.html")
 
 @app.route("/kibana_vars")
-def all_vault():
+def kibana_vars():
     return render_template("kibana_variables.html")
 
 @app.route("/fleetserver_vars")
-def all_vault():
+def fleetserver_vars():
     return render_template("fleetserver_variables.html")
 
 @app.route("/generate", methods=["POST"])
