@@ -1,25 +1,77 @@
-document.getElementById("vaultForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Variáveis Globais (all.yml)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    .var-field { 
+      display: flex; 
+      gap: 10px; 
+      align-items: center; 
+      margin-bottom: 10px; 
+    }
+    .var-field input {
+      flex: 1;
+    }
+    .remove-btn {
+      background-color: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .remove-btn:hover {
+      background-color: #d93636;
+    }
+    #addVarBtn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #addVarBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Definir Variáveis Globais - group_vars/all_vault.yml</h1>
 
-  // Pergunta ao usuário qual inventário usar
-  const inventoryName = prompt("Digite o nome do inventário onde salvar o vault:");
-  if (!inventoryName) return alert("Nome do inventário é obrigatório!");
+    <form id="varsForm">
+      <div id="varsContainer">
+        <!-- Campos padrão -->
+        <div class="var-field">
+          <label>cert_password:</label>
+          <input type="text" name="cert_password" placeholder="senha certificado" required>
+        </div>
+        <div class="var-field">
+          <label>elastic_password:</label>
+          <input type="text" name="elastic_password" placeholder="senha elastic">
+        </div>
+        <div class="var-field">
+          <label>kibana_password:</label>
+          <input type="text" name="kibana_password" placeholder="senha kibana_system">
+        </div> 
+        <div class="var-field">
+          <label>logstash_password:</label>
+          <input type="text" name="logstash_password" placeholder="senha logstash">
+        </div>         
+      </div>
 
-  const formData = new FormData(e.target);
+      <button type="button" id="addVarBtn">+ Adicionar nova variável</button>
+      <br><br>
+      <button type="submit">Gerar all_vault.yml</button>
+    </form>
 
-  try {
-    const response = await fetch(`/generate_vault_vars?inventory_name=${inventoryName}`, {
-      method: "POST",
-      body: formData
-    });
+    <div id="response"></div>
+  </div>
 
-    if (!response.ok) throw new Error("Erro ao gerar all_vault.yml");
-
-    const result = await response.json();
-    document.getElementById("response").innerHTML =
-      `<p style="color:green">${result.message}</p>`;
-  } catch (error) {
-    document.getElementById("response").innerHTML =
-      `<p style="color:red">Erro: ${error.message}</p>`;
-  }
-});
+  <script src="{{ url_for('static', filename='all_vault_variables.js') }}"></script>
+</body>
+</html>

@@ -18,6 +18,9 @@ def index():
 def variables():
     return render_template("all_variables.html")
 
+@app.route("/all_vault")
+def all_vault():
+    return render_template("all_vault.html")
 
 @app.route("/generate", methods=["POST"])
 def generate_inventory():
@@ -104,6 +107,17 @@ def generate_all_vars():
     mem_zip.seek(0)
     return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
 
+@app.route('/generate_all_vault', methods=['POST'])
+def generate_all_vars():
+    vars_data = {k: v for k, v in request.form.items()}
+    vars_yml = yaml.dump(vars_data, sort_keys=False, allow_unicode=True)
+
+    mem_zip = io.BytesIO()
+    with zipfile.ZipFile(mem_zip, 'w') as zf:
+        zf.writestr("group_vars/all/all_vault.yml", vars_yml)
+
+    mem_zip.seek(0)
+    return send_file(mem_zip, as_attachment=True, download_name="all_vars.zip")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
