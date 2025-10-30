@@ -144,12 +144,21 @@ function renderDefaults(containerId, defaults) {
     logstash_config_dir: '/etc/logstash'
   };
 
+    // defaults for fleet (separate container)
+  const vaultDefaults = {
+    cert_password: 'password',
+    elastic_password: 'password',
+    kibana_password: 'password',
+    logstash_password: 'password'
+  };
+
   // render defaults into their respective containers
   renderDefaults('allVarsContainer', allDefaults);
   renderDefaults('esVarsContainer', elasticDefaults);
   renderDefaults('kibanaVarsContainer', kibanaDefaults);
   renderDefaults('fleetVarsContainer', fleetDefaults);
   renderDefaults('logstashVarsContainer', logstashDefaults);
+  renderDefaults('vaultVarsContainer', vaultDefaults);
 
   // containers for other steps
   document.getElementById('addEsVar').addEventListener('click', ()=> document.getElementById('esVarsContainer').appendChild(createInputRow()));
