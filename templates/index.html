@@ -1,42 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Gerador de Inventário Ansible</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wizard — Gerador de Inventário Ansible</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <style>
+    /* Minimal modern styling */
+    :root{--bg:#071029;--card:#0f172a;--muted:#94a3b8;--accent:#3b82f6;--ok:#10b981}
+    body{font-family:Inter,system-ui,Segoe UI,Arial;background:var(--bg);color:#e6eef6;margin:0;padding:24px}
+    .wrap{max-width:1100px;margin:0 auto}
+    .card{background:var(--card);padding:20px;border-radius:12px;box-shadow:0 6px 24px rgba(2,6,23,.6)}
+    h1{margin:0 0 12px;font-size:20px}
+    .steps{display:flex;gap:8px;margin-bottom:16px}
+    .step{flex:1;padding:10px;border-radius:8px;text-align:center;background:#071826;color:var(--muted)}
+    .step.active{background:var(--accent);color:#fff}
+    .controls{display:flex;justify-content:space-between;margin-top:16px}
+    button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#334155}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:12px}
+    .preview{background:#020617;padding:12px;border-radius:8px;overflow:auto;height:520px}
+    label{display:block;font-size:13px;color:var(--muted);margin-top:8px}
+    input[type=text], textarea, select{width:100%;padding:8px;border-radius:8px;border:1px solid #122034;background:#071826;color:#e6eef6}
+    .group-block, .host-block, .var-field{background:#081427;padding:8px;border-radius:8px;margin-top:8px;border:1px solid #122034}
+    .row{display:flex;gap:8px}
+    .row input{flex:1}
+    .muted{color:var(--muted);font-size:13px}
+    .add-btn{background:#0ea5e9;padding:6px 10px;border-radius:6px;border:0;color:white}
+    .danger{background:#ef4444}
+  </style>
 </head>
 <body>
-    <h1>Gerador de Inventário Ansible</h1>
-    <div class="container">
-        <label>Nome do inventário:</label>
-        <input type="text" id="inventoryName" placeholder="ex: elk-forensics">
+  <div class="wrap">
+    <div class="card">
+      <h1>Wizard — Gerador de Inventário Ansible</h1>
 
-        <h2>Data Nodes (Elasticsearch)</h2>
-        <div id="dataNodesContainer"></div>
-        <button onclick="addGroup('dataNodesContainer')">Adicionar Grupo de Data Node</button>
+      <div class="steps" id="stepsHeader">
+        <div class="step active" data-step="1">1 — Inventário</div>
+        <div class="step" data-step="2">2 — All variables</div>
+        <div class="step" data-step="3">3 — Elasticsearch</div>
+        <div class="step" data-step="4">4 — Kibana</div>
+        <div class="step" data-step="5">5 — Fleet Server</div>
+        <div class="step" data-step="6">6 — Logstash</div>
+        <div class="step" data-step="7">7 — Vault</div>
+      </div>
 
-        <h2>Kibana</h2>
-        <div id="kibanaContainer"></div>
-        <button onclick="addGroup('kibanaContainer')">Adicionar Grupo de Kibana</button>
+      <div class="grid">
+        <div>
+          <!-- STEP 1: INVENTORY -->
+          <div id="step-1" class="step-panel">
+            <label>Nome do inventário</label>
+            <input id="inventoryName" type="text" placeholder="ex: elk-forensics">
 
-        <h2>Logstash</h2>
-        <div id="logstashContainer"></div>
-        <button onclick="addGroup('logstashContainer')">Adicionar Grupo de Logstash</button>
+            <h3 class="muted">Data Nodes (Elasticsearch)</h3>
+            <div id="dataNodesContainer"></div>
+            <button class="add-btn" onclick="addGroup('dataNodesContainer')">+ Adicionar Grupo de Data Node</button>
 
-        <h2>Fleet Server</h2>
-        <div id="fleetContainer"></div>
-        <button onclick="addGroup('fleetContainer')">Adicionar Grupo de Fleet</button>
+            <h3 class="muted" style="margin-top:12px">Kibana</h3>
+            <div id="kibanaContainer"></div>
+            <button class="add-btn" onclick="addGroup('kibanaContainer')">+ Adicionar Grupo de Kibana</button>
 
-        <hr>
-        <button onclick="generateInventory()">Gerar Inventário</button>
+            <h3 class="muted" style="margin-top:12px">Logstash</h3>
+            <div id="logstashContainer"></div>
+            <button class="add-btn" onclick="addGroup('logstashContainer')">+ Adicionar Grupo de Logstash</button>
 
-        <h3>Pré-visualização do YAML</h3>
-        <pre id="yamlOutput"></pre>
+            <h3 class="muted" style="margin-top:12px">Fleet Server</h3>
+            <div id="fleetContainer"></div>
+            <button class="add-btn" onclick="addGroup('fleetContainer')">+ Adicionar Grupo de Fleet</button>
+          </div>
 
-        <a href="/variables" class="secondary-button">Configurar Variáveis do All</a>
+          <!-- STEP 2: ALL VARIABLES -->
+          <div id="step-2" class="step-panel" style="display:none">
+            <label>All variables (preencha os campos que quer salvar)</label>
+            <div id="allVarsContainer">
+              <!-- default fields -->
+            </div>
+            <button class="add-btn" id="addAllVar">+ Adicionar variável</button>
+          </div>
+
+          <!-- STEP 3: ELASTICSEARCH -->
+          <div id="step-3" class="step-panel" style="display:none">
+            <label>Elasticsearch variables</label>
+            <div id="esVarsContainer"></div>
+            <button class="add-btn" id="addEsVar">+ Adicionar variável</button>
+          </div>
+
+          <!-- STEP 4: KIBANA -->
+          <div id="step-4" class="step-panel" style="display:none">
+            <label>Kibana variables</label>
+            <div id="kibanaVarsContainer"></div>
+            <button class="add-btn" id="addKibanaVar">+ Adicionar variável</button>
+          </div>
+
+          <!-- STEP 5: FLEET -->
+          <div id="step-5" class="step-panel" style="display:none">
+            <label>Fleet Server variables</label>
+            <div id="fleetVarsContainer"></div>
+            <button class="add-btn" id="addFleetVar">+ Adicionar variável</button>
+          </div>
+
+          <!-- STEP 6: LOGSTASH -->
+          <div id="step-6" class="step-panel" style="display:none">
+            <label>Logstash Server variables</label>
+            <div id="logstashVarsContainer"></div>
+            <button class="add-btn" id="addLogstashVar">+ Adicionar variável</button>
+          </div>
+
+          <!-- STEP 7: VAULT -->
+          <div id="step-7" class="step-panel" style="display:none">
+            <label>Vault variables (senhas)</label>
+            <div id="vaultVarsContainer"></div>
+            <label style="margin-top:8px"><input type="checkbox" id="encryptVault"> Criptografar com ansible-vault (se disponível no servidor)</label>
+            <button class="add-btn" id="addVaultVar">+ Adicionar variável</button>
+          </div>
+
+          <div class="controls">
+            <button id="prevBtn" class="secondary" disabled>Anterior</button>
+            <div style="display:flex;gap:8px">
+              <button id="saveStepBtn" class="">Salvar etapa</button>
+              <button id="nextBtn">Próximo</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="background:#041029;height:100%;padding:12px">
+            <h3>Pré-visualização (hosts.yml / group_vars)</h3>
+            <div class="preview" id="previewArea">Preview aparecerá aqui</div>
+            <div style="margin-top:8px"><small class="muted">Depois de salvar cada etapa os arquivos serão gravados em <code>generated_inventories/&lt;inventory_name&gt;/</code></small></div>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
