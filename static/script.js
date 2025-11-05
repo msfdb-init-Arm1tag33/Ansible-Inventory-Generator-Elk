@@ -84,10 +84,7 @@ function renderDefaults(containerId, defaults) {
 // populate initial defaults
 (function init(){
   // default a group per section so user sees something
-  addGroup('dataNodesContainer');
-  addGroup('kibanaContainer');
-  addGroup('logstashContainer');
-  addGroup('fleetContainer');
+  addGroup('dataNodesContainer'); // Add one data node group by default
 
   // defaults for all vars
   const allDefaults = {
@@ -245,9 +242,7 @@ async function saveInventoryStep(){
     inventory_name,
     groups: {
       data_nodes: collectGroups('dataNodesContainer'),
-      kibana: collectGroups('kibanaContainer'),
-      logstash: collectGroups('logstashContainer'),
-      fleet: collectGroups('fleetContainer')
+      other_nodes: collectGroups('otherGroupsContainer')
     }
   };
   const res = await fetch('/api/generate_inventory', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload)});

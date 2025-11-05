@@ -54,24 +54,23 @@ def api_generate_inventory():
                 yaml.dump(host_vars, hv, sort_keys=False, allow_unicode=True)
         inventory["all"]["children"]["elasticsearch"]["children"][gname] = group_dict
 
-    # other groups (kibana, logstash, fleet)
-    for section in ("kibana", "logstash", "fleet"):
-        for group in groups_data.get(section, []):
-            gname = group.get("group_name") or section
-            hosts = group.get("hosts", [])
-            if not hosts:
+    # other groups (kibana, logstash, fleet, etc) from a single list
+    for group in groups_data.get("other_nodes", []):
+        gname = group.get("group_name")
+        hosts = group.get("hosts", [])
+        if not gname or not hosts:
+            continue
+        group_dict = {"hosts": {}}
+        for h in hosts:
+            name = h.get("hostname")
+            ip = h.get("ip")
+            if not name or not ip:
                 continue
-            group_dict = {"hosts": {}}
-            for h in hosts:
-                name = h.get("hostname")
-                ip = h.get("ip")
-                if not name or not ip:
-                    continue
-                group_dict["hosts"][name] = {"ansible_host": ip}
-                host_vars = {"es_node_name": name}
-                with open(os.path.join(host_vars_dir, f"{name}.yml"), "w", encoding="utf-8") as hv:
-                    yaml.dump(host_vars, hv, sort_keys=False, allow_unicode=True)
-            inventory["all"]["children"][section] = group_dict
+            group_dict["hosts"][name] = {"ansible_host": ip}
+            host_vars = {"es_node_name": name}
+            with open(os.path.join(host_vars_dir, f"{name}.yml"), "w", encoding="utf-8") as hv:
+                yaml.dump(host_vars, hv, sort_keys=False, allow_unicode=True)
+        inventory["all"]["children"][gname] = group_dict
 
     # save hosts.yml
     os.makedirs(inv_dir, exist_ok=True)
