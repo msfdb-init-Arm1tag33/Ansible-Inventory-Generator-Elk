@@ -91,31 +91,60 @@ function renderDefaults(containerId, defaults) {
 
   // defaults for all vars
   const allDefaults = {
-    mgmt_user: 'ansible-mgmt',
-    elastic_mount_point: '/var/lib/elasticsearch',
-    elastic_user: 'elastic',
-    elastic_version: '8.19.5',
-    elastic_agent_version: '8.19.5',
-    agent_install_dir: '/tmp',
-    home_directory_ansible: 'lrodrigues',
-    fleet_cert_dir: '/etc/fleet_server/certs',
-    policy_name: 'fleet_server-policy-testing',
-    policy_namespace: 'default',
-    policy_description: 'Policy fleet criada via API pelo Ansible',
-    policy_name_agent: 'linux-agent-policy',
-    policy_namespace_agent: 'default',
-    policy_description_agent: 'Policy agent criada via API pelo Ansible',
-    nome_fleet_server: 'fleet_server',
-    kibana_server_name: 'kibana01',
-    nome_do_ca: 'elastic-stack-ca.p12',
-    nome_do_ca_pem: 'elastic-stack-ca.pem',
-    nome_crt_ca: 'elastic-stack-ca.crt',
-    nome_key_ca: 'elastic-stack-ca.key',
-    nome_do_cert_elastic: 'elastic-certificate.p12',
-    single_node: 'false',
-    new_cluster: 'true',
-    usar_ca_existente: 'false'
-  };
+  // Users
+  mgmt_user: 'ansible-mgmt',
+
+  // Disk configuration
+  elastic_mount_point: '/var/lib/elasticsearch',
+
+  // URLs
+  elasticsearch_url: "https://{{ hostvars[groups['master_nodes'][0]]['ansible_host'] }}:9200",
+  kibana_url: "https://{{ kibana_ip }}:5601",
+  fleet_server_url: "https://{{ hostvars[groups['fleet_server'][0]]['ansible_host'] }}:8220",
+
+  // IPs
+  kibana_ip: "{{ hostvars[groups['kibana'][0]]['ansible_host'] }}",
+
+  // Users
+  elastic_user: 'elastic',
+
+  // Versões
+  elastic_version: '8.19.5',
+  elastic_agent_version: '8.19.5',
+  elastic_agent_package: 'elastic-agent-{{ elastic_agent_version }}-linux-x86_64.tar.gz',
+
+  // Diretórios
+  agent_install_dir: '/tmp',
+  home_directory_ansible: 'lrodrigues',
+  fleet_cert_dir: '/etc/fleet-server/certs',
+
+  // Policy e tokens
+  policy_name: 'fleet-server-policy-testing',
+  policy_namespace: 'default',
+  policy_description: 'Policy fleet criada via API pelo Ansible',
+  service_token_name: "fleet_token_{{ inventory_hostname | regex_replace('[^A-Za-z0-9_]', '_') }}_{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}",
+
+  // Policy dos agents comuns
+  policy_name_agent: 'linux-agent-policy',
+  policy_namespace_agent: 'default',
+  policy_description_agent: 'Policy agent criada via API pelo Ansible',
+
+  // Metadata
+  nome_fleet_server: 'fleet-server',
+  kibana_server_name: 'kibana01',
+
+  // Certificados e CA
+  nome_do_ca: 'elastic-stack-ca.p12',
+  nome_do_ca_pem: 'elastic-stack-ca.pem',
+  nome_crt_ca: 'elastic-stack-ca.crt',
+  nome_key_ca: 'elastic-stack-ca.key',
+  nome_do_cert_elastic: 'elastic-certificate.p12',
+
+  // Opções de cluster
+  single_node: false,
+  new_cluster: true,
+  usar_ca_existente: false
+};
   // defaults for elasticsearch (separate container)
   const elasticDefaults = {
     elasticsearch_config_dir: '/etc/elasticsearch',
@@ -146,7 +175,7 @@ function renderDefaults(containerId, defaults) {
 
     // defaults for fleet (separate container)
   const vaultDefaults = {
-    cert_password: 'password',
+    cert_password: '5ED4swayeD3So6rucHat',
     elastic_password: 'password',
     kibana_password: 'password',
     logstash_password: 'password'
