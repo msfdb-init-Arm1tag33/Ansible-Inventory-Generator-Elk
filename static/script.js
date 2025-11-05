@@ -136,6 +136,7 @@ function renderDefaults(containerId, defaults) {
   nome_crt_ca: 'elastic-stack-ca.crt',
   nome_key_ca: 'elastic-stack-ca.key',
   nome_do_cert_elastic: 'elastic-certificate.p12',
+  elastic_cert_path: '/etc/elasticsearch/certs',
 
   // Opções de cluster
   single_node: false,
@@ -144,8 +145,7 @@ function renderDefaults(containerId, defaults) {
 };
   // defaults for elasticsearch (separate container)
   const elasticDefaults = {
-    elasticsearch_config_dir: '/etc/elasticsearch',
-    elastic_cert_path: '/etc/elasticsearch/certs'
+    elasticsearch_config_dir: '/etc/elasticsearch'
   };
   // defaults for kibana (separate container)
   const kibanaDefaults = {
