@@ -97,7 +97,7 @@ function renderDefaults(containerId, defaults) {
   // URLs
   elasticsearch_url: "https://{{ hostvars[groups['master_nodes'][0]]['ansible_host'] }}:9200",
   kibana_url: "https://{{ kibana_ip }}:5601",
-  fleet_server_url: "https://{{ hostvars[groups['fleet_server'][0]]['ansible_host'] }}:8220",
+  fleet_server_url: "https://{{ hostvars[groups['fleet'][0]]['ansible_host'] }}:8220",
 
   // IPs
   kibana_ip: "{{ hostvars[groups['kibana'][0]]['ansible_host'] }}",
