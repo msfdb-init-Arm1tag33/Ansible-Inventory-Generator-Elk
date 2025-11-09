@@ -152,7 +152,6 @@ function renderDefaults(containerId, defaults) {
     kibana_version: '8.19.3',
     kibana_install_dir: '/usr/share/kibana',
     kibana_config_dir: '/etc/kibana',
-    kibana_server_name: 'kibana-server'
   };
   // defaults for fleet (separate container)
   const fleetDefaults = {
