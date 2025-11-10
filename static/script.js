@@ -334,7 +334,7 @@ async function updatePreviewArea(){
     if(j.all) text.push('\n--- group_vars/all/all.yml ---\n' + jsYamlSafeDump(j.all));
     if(j.elasticsearch) text.push('\n--- group_vars/elasticsearch/elasticsearch.yml ---\n' + jsYamlSafeDump(j.elasticsearch));
     if(j.kibana) text.push('\n--- group_vars/kibana/kibana.yml ---\n' + jsYamlSafeDump(j.kibana));
-    if(j.fleet_server) text.push('\n--- group_vars/fleet_server/fleet_server.yml ---\n' + jsYamlSafeDump(j.fleet_server));
+    if(j.fleet_server) text.push('\n--- group_vars/fleet/fleet_server.yml ---\n' + jsYamlSafeDump(j.fleet_server));
     preview.textContent = text.join('\n');
   }catch(e){
     preview.textContent = 'Erro ao buscar preview: ' + e.message;
