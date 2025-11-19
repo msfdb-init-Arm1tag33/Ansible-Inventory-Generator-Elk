@@ -10,13 +10,22 @@ function setActiveStep(n){
     head.classList.toggle('active', i===n);
   }
   document.getElementById('prevBtn').disabled = n===1;
-  document.getElementById('nextBtn').disabled = n===maxStep;
+  
+  const nextBtn = document.getElementById('nextBtn');
+  const saveStepBtn = document.getElementById('saveStepBtn');
+  if (n === maxStep) {
+    nextBtn.textContent = 'Finalizar';
+    saveStepBtn.style.display = 'none'; // Oculta o botão "Salvar etapa"
+  } else {
+    nextBtn.textContent = 'Próximo';
+    saveStepBtn.style.display = ''; // Mostra o botão "Salvar etapa"
+  }
+
   updatePreviewArea();
 }
 
 document.getElementById('prevBtn').addEventListener('click', ()=> setActiveStep(currentStep-1));
-document.getElementById('nextBtn').addEventListener('click', ()=> setActiveStep(currentStep+1));
-
+document.getElementById('nextBtn').addEventListener('click', handleNextOrFinish);
 // save step button
 document.getElementById('saveStepBtn').addEventListener('click', async ()=>{
   try{
@@ -34,6 +43,15 @@ document.getElementById('saveStepBtn').addEventListener('click', async ()=>{
     alert('Erro: ' + (e.message || e));
   }
 });
+
+async function handleNextOrFinish() {
+  if (currentStep < maxStep) {
+    setActiveStep(currentStep + 1);
+  } else if (currentStep === maxStep) {
+    // Simula o clique no botão de salvar para a última etapa
+    await document.getElementById('saveStepBtn').click();
+  }
+}
 
 // helpers to add groups/hosts/vars in DOM
 function createInputRow(key='', value=''){
@@ -309,6 +327,13 @@ async function saveVaultVars(){
   const res = await fetch('/api/generate_all_vault', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({inventory_name, variables: vars, encrypt})});
   const j = await res.json();
   if(!res.ok) throw new Error(j.message || 'failed');
+
+  // Exibe a mensagem de sucesso
+  const successMessage = document.getElementById('successMessage');
+  successMessage.textContent = `Inventário gerado com sucesso em ${j.inventory_path}`;
+  successMessage.style.display = 'block';
+  document.getElementById('nextBtn').disabled = true; // Desabilita o botão Finalizar
+
   return j;
 }
 
