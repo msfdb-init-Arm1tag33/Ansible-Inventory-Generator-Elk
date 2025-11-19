@@ -81,7 +81,7 @@ function createHostEl(){
   return h;
 }
 function createRoleCheckboxes(){
-  const roles = ["master","data_content","ingest","data_hot","data_warm","data_cold","data_frozen","ml","coordinator"];
+  const roles = ["master","data_content","ingest","data_hot","data_warm","data_cold","data_frozen","ml","coordinator","transform","remote_cluster_client","voting_only"];
   return roles.map(r=>`<label style="margin-right:6px"><input type="checkbox" value="${r}"> ${r}</label>`).join('');
 }
 
